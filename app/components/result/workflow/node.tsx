@@ -5,7 +5,8 @@ import cn from 'classnames'
 import BlockIcon from './block-icon'
 import { AlertCircle, AlertTriangle } from '@/app/components/base/icons/line/alertsAndFeedback'
 import { CheckCircle, Loading02 } from '@/app/components/base/icons/line/general'
-import type { NodeTracing } from '@/types/app'
+import { CodeLanguage, type NodeTracing } from '@/types/app'
+import CodeEditor from './code-editor'
 
 type Props = {
   nodeInfo: NodeTracing
@@ -33,9 +34,9 @@ const NodePanel: FC<Props> = ({ nodeInfo, hideInfo = false }) => {
   }
 
   useEffect(() => {
-    setCollapseState(!nodeInfo.expand)
+    console.log(nodeInfo);
+    //setCollapseState(!nodeInfo.expand)
   }, [nodeInfo.expand])
-
   return (
     <div className={cn('px-4 py-1', hideInfo && '!p-0')}>
       <div className={cn('group transition-all bg-white border border-gray-100 rounded-2xl shadow-xs hover:shadow-md', hideInfo && '!rounded-lg')}>
@@ -53,8 +54,8 @@ const NodePanel: FC<Props> = ({ nodeInfo, hideInfo = false }) => {
             'grow text-gray-700 text-[13px] leading-[16px] font-semibold truncate',
             hideInfo && '!text-xs',
           )} title={nodeInfo.title}>{nodeInfo.title}</div>
-          {nodeInfo.status !== 'running' && !hideInfo && (
-            <div className='shrink-0 text-gray-500 text-xs leading-[18px]'>{`${getTime(nodeInfo.elapsed_time || 0)} · ${getTokenCount(nodeInfo.execution_metadata?.total_tokens || 0)} tokens`}</div>
+          {nodeInfo.status !== 'running' && (
+            <div className='shrink-0 text-gray-500 text-xs leading-[18px]'>{`${getTime(nodeInfo.elapsed_time || 0)}`}</div>
           )}
           {nodeInfo.status === 'succeeded' && (
             <CheckCircle className='shrink-0 ml-2 w-3.5 h-3.5 text-[#12B76A]' />
@@ -72,6 +73,25 @@ const NodePanel: FC<Props> = ({ nodeInfo, hideInfo = false }) => {
             </div>
           )}
         </div>
+        {!collapseState && nodeInfo.status !== 'running' && <div style={{ padding: 20 }}>
+          <CodeEditor
+            readOnly
+            title={<div>Input Json</div>}
+            language={CodeLanguage.json}
+            value={nodeInfo.inputs}
+            isJSONStringifyBeauty
+          />
+          <div style={{ height: 10 }}></div>
+          <CodeEditor
+            readOnly
+            title={<div>Output Json</div>}
+            language={CodeLanguage.json}
+            value={nodeInfo.outputs}
+            isJSONStringifyBeauty
+          />
+          <div style={{ height: 10 }}></div>
+        </div>
+        }
       </div>
     </div>
   )

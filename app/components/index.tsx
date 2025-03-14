@@ -23,6 +23,8 @@ import AppUnavailable from '@/app/components/app-unavailable'
 import { API_KEY, APP_ID, APP_INFO, DEFAULT_VALUE_MAX_LEN, IS_WORKFLOW } from '@/config'
 import { userInputsFormToPromptVariables } from '@/utils/prompt'
 
+let run = false;
+
 const GROUP_SIZE = 5 // to avoid RPM(Request per minute) limit. The group task finished then the next group.
 enum TaskStatus {
   pending = 'pending',
@@ -337,6 +339,7 @@ const TextGeneration = () => {
     }
   }
 
+
   useEffect(() => {
     if (!hasSetAppConfig) {
       setAppUnavailable(true)
@@ -348,7 +351,13 @@ const TextGeneration = () => {
 
         const { user_input_form, file_upload, system_parameters }: any = await fetchAppParams()
         const prompt_variables = userInputsFormToPromptVariables(user_input_form)
-
+        console.log(prompt_variables)
+        // Set the values to the state
+        const params = new URLSearchParams(window.location.search);
+        setInputs({
+          "portoflio_id": params.get('portfolio_id') || '', // Default to an empty string if not found
+          "analysis_date": params.get('analysis_date') || '' // Default to an empty string if not found
+        });
         setPromptConfig({
           prompt_template: '',
           prompt_variables,
@@ -357,6 +366,17 @@ const TextGeneration = () => {
           ...file_upload?.image,
           image_file_size_limit: system_parameters?.image_file_size_limit || 0,
         })
+        if (!run) {
+          run = true
+          setTimeout(() => {
+            setIsCallBatchAPI(false)
+            setControlSend(Date.now())
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            setAllTaskList([]) // clear batch task running status
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            showResSidebar()
+          }, 5000)
+        }
       }
       catch (e: any) {
         if (e.status === 404) {
@@ -372,7 +392,7 @@ const TextGeneration = () => {
 
   useEffect(() => {
     if (APP_INFO?.title)
-      document.title = `${APP_INFO.title} - Powered by Dify`
+      document.title = `${APP_INFO.title} - Powered by Axisoft`
   }, [APP_INFO?.title])
 
   const [isShowResSidebar, { setTrue: showResSidebar, setFalse: hideResSidebar }] = useBoolean(false)
@@ -419,7 +439,7 @@ const TextGeneration = () => {
         <div className='shrink-0 flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
             <div className={s.starIcon}></div>
-            <div className='text-lg text-gray-800 font-semibold'>{t('app.generation.title')}</div>
+            <div className='text-lg text-gray-800 font-semibold'>{t("Investment Insigts")}</div>
           </div>
           <div className='flex items-center space-x-2'>
             {allFailedTaskList.length > 0 && (
@@ -473,76 +493,7 @@ const TextGeneration = () => {
     <>
       <div className={cn(isPC && 'flex', 'h-screen bg-gray-50')}>
         {/* Left */}
-        <div className={cn(isPC ? 'w-[600px] max-w-[50%] p-8' : 'p-4', 'shrink-0 relative flex flex-col pb-10 h-full border-r border-gray-100 bg-white')}>
-          <div className='mb-6'>
-            <div className='flex justify-between items-center'>
-              <div className='flex items-center space-x-3'>
-                <div className={cn(s.appIcon, 'shrink-0')}></div>
-                <div className='text-lg text-gray-800 font-semibold'>{APP_INFO.title}</div>
-              </div>
-              {!isPC && (
-                <Button
-                  className='shrink-0 !h-8 !px-3'
-                  onClick={showResSidebar}
-                >
-                  <div className='flex items-center space-x-2 text-primary-600 text-[13px] font-medium'>
-                    <div className={s.starIcon}></div>
-                    <span>{t('app.generation.title')}</span>
-                  </div>
-                </Button>
-              )}
-            </div>
-            {APP_INFO.description && (
-              <div className='mt-2 text-xs text-gray-500'>{APP_INFO.description}</div>
-            )}
-          </div>
 
-          <TabHeader
-            items={[
-              { id: 'create', name: t('app.generation.tabs.create') },
-              { id: 'batch', name: t('app.generation.tabs.batch') },
-            ]}
-            value={currTab}
-            onChange={setCurrTab}
-          />
-
-          <div className='grow h-20 overflow-y-auto'>
-            <div className={cn(currTab === 'create' ? 'block' : 'hidden')}>
-              <RunOnce
-                inputs={inputs}
-                onInputsChange={setInputs}
-                promptConfig={promptConfig}
-                onSend={handleSend}
-                visionConfig={visionConfig}
-                onVisionFilesChange={setCompletionFiles}
-              />
-            </div>
-            <div className={cn(isInBatchTab ? 'block' : 'hidden')}>
-              <RunBatch
-                vars={promptConfig.prompt_variables}
-                onSend={handleRunBatch}
-                isAllFinished={allTaskRuned}
-              />
-            </div>
-          </div>
-
-          {/* copyright */}
-          <div className='fixed left-8 bottom-4  flex space-x-2 text-gray-400 font-normal text-xs'>
-            <div className="">© {APP_INFO.copyright || APP_INFO.title} {(new Date()).getFullYear()}</div>
-            {APP_INFO.privacy_policy && (
-              <>
-                <div>·</div>
-                <div>{t('app.generation.privacyPolicyLeft')}
-                  <a
-                    className='text-gray-500'
-                    href={APP_INFO.privacy_policy}
-                    target='_blank'>{t('app.generation.privacyPolicyMiddle')}</a>
-                  {t('app.generation.privacyPolicyRight')}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
 
         {/* Result */}
         {isPC && (
