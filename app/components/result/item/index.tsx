@@ -17,6 +17,9 @@ import RefreshCcw01 from '@/app/components/base/icons/line/refresh-ccw-01'
 import CodeEditor from '@/app/components/result/workflow/code-editor'
 import WorkflowProcessItem from '@/app/components/result/workflow/workflow-process'
 import { CodeLanguage } from '@/types/app'
+import { Tab } from '@headlessui/react'
+import { ChevronRight } from '../../base/icons/line/arrows'
+import { CheckCircle } from '../../base/icons/line/general'
 
 export type IGenerationItemProps = {
   isWorkflow?: boolean
@@ -81,6 +84,11 @@ const GenerationItem: FC<IGenerationItemProps> = ({
     rating: null,
   })
 
+  function classNames(...classes: string[]) {
+    return classes.filter(Boolean).join(' ')
+  }
+
+
   const handleFeedback = async (childFeedback: Feedbacktype) => {
     await updateFeedback({ url: `/messages/${childMessageId}/feedbacks`, body: { rating: childFeedback.rating } })
     setChildFeedback(childFeedback)
@@ -100,6 +108,24 @@ const GenerationItem: FC<IGenerationItemProps> = ({
     isMobile,
     isWorkflow,
   }
+
+  let [categories] = useState({
+    Files: [
+      {
+        id: 1,
+        content: ""
+      }
+    ],
+    Data: [
+      {
+        id: 2,
+        title: 'Is tech making coffee better or worse?',
+        date: 'Jan 7',
+        commentCount: 29,
+        shareCount: 16,
+      }
+    ]
+  })
 
   const mainStyle = (() => {
     const res: React.CSSProperties = !isTop
@@ -151,36 +177,90 @@ const GenerationItem: FC<IGenerationItemProps> = ({
                 {isError && (
                   <div className='text-gray-400 text-sm'>{t('app.generation.batchFailed.outputPlaceholder')}</div>
                 )}
-                {!isError && (typeof content === 'string') && (
-                  <Markdown content={content} />
-                )}
-                {!isError && (typeof content !== 'string') && (
-                  <CodeEditor
-                    readOnly
-                    title={<div />}
-                    language={CodeLanguage.json}
-                    value={content}
-                    isJSONStringifyBeauty
-                  />
-                )}
+                {!isError && content && (
+                  <div
+                    className={cn(
+                      'mb-2 rounded-xl border-[0.5px] border-black/[0.08]',
+                      'pt-2 pb-1',
+                      'bg-gray-50', 'mx-[-8px] px-1'
+                    )}
+                    style={{
+                      background: 'linear-gradient(180deg, #ECFDF3 0%, #F6FEF9 100%)'
+                    }}
+                  >
+                    <div
+                      className={cn(
+                        'flex items-center h-[18px] cursor-pointer', 'px-[6px]'
+                      )}>
+                      <CheckCircle className='shrink-0 mr-1 w-3 h-3 text-[#12B76A]' />
+                      <div className='grow text-xs font-medium text-gray-700 leading-[18px]'>Result</div>
+                    </div>
+                    <div style={{ margin: 30, padding: 0, background: "#f0f0f0" }}
+                      className="w-full max-w-md px-2 py-16 sm:px-0">
+                      <Tab.Group>
+                        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+                          {Object.keys(categories).map((category) => (
+                            <Tab
+                              key={category}
+                              className={({ selected }) =>
+                                classNames(
+                                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
+                                  'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                                  selected
+                                    ? 'bg-white text-blue-700 shadow'
+                                    : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                                )
+                              }
+                            >
+                              {category}
+                            </Tab>
+                          ))}
+                        </Tab.List>
+                        <Tab.Panels className="mt-2">
+                          <Tab.Panel
+                            key={1}
+                          >
+                            <div style={{ margin: 20 }}>
+                              {content && content.length && <a href={content[0].url} download="report.pdf" target='_blank' style={{ display: "inline-block", padding: "20" }}>
+                                <div style={{
+                                  background: "#fff",
+                                  wordBreak: "break-word"
+                                }} className="group/file-item relative p-2 w-[144px] h-[88px] rounded-lg border-[0.5px] border-components-panel-border bg-components-card-bg shadow-xs hover:bg-components-card-bg-alt">
+                                  <div style={{ height: 41, fontSize: 12 }} className="mb-1 h-8 line-clamp-2 system-xs-medium text-text-tertiary break-all cursor-pointer" title="13793bc4800143c3b4cedeae46ea8da4.pdf">
+                                    Investment Insigts Report.pdf</div><div style={{ fontSize: 11 }} className="relative flex items-center justify-between"><div className="flex items-center system-2xs-medium-uppercase text-text-tertiary"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon shrink-0 w-4 h-4 text-[#EA3434] mr-1"><path d="M3.9985 2C3.44749 2 3 2.44405 3 2.9918V21.0082C3 21.5447 3.44476 22 3.9934 22H20.0066C20.5551 22 21 21.5489 21 20.9925L20.9997 7L16 2H3.9985ZM10.5 7.5H12.5C12.5 9.98994 14.6436 12.6604 17.3162 13.5513L16.8586 15.49C13.7234 15.0421 10.4821 16.3804 7.5547 18.3321L6.3753 16.7191C7.46149 15.8502 8.50293 14.3757 9.27499 12.6534C10.0443 10.9373 10.5 9.07749 10.5 7.5ZM11.1 13.4716C11.3673 12.8752 11.6043 12.2563 11.8037 11.6285C12.2754 12.3531 12.8553 13.0182 13.5102 13.5953C12.5284 13.7711 11.5666 14.0596 10.6353 14.4276C10.8 14.1143 10.9551 13.7948 11.1 13.4716Z"></path></svg>pdf<div className="mx-1">·</div>
+                                      {Math.ceil(content[0].size / 1024 * 100) / 100} KB</div><button type="button" className="action-btn action-btn-m hidden group-hover/file-item:flex absolute -right-1 -top-1"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon w-3.5 h-3.5 text-text-tertiary"><path d="M3 19H21V21H3V19ZM13 13.1716L19.0711 7.1005L20.4853 8.51472L12 17L3.51472 8.51472L4.92893 7.1005L11 13.1716V2H13V13.1716Z"></path></svg></button></div></div>
+                              </a>}
+                            </div>
+                            <div style={{ height: 20 }}>
+
+                            </div>
+                          </Tab.Panel>
+                          <Tab.Panel
+                            key={2}
+                          >
+                            {!isError && (typeof content === 'string') && (
+                              <Markdown content={content} />
+                            )}
+                            {!isError && (typeof content !== 'string') && (
+                              <CodeEditor
+                                readOnly
+                                title={<div />}
+                                language={CodeLanguage.json}
+                                value={content}
+                                isJSONStringifyBeauty
+                              />
+                            )}
+                          </Tab.Panel>
+                        </Tab.Panels>
+                      </Tab.Group>
+                    </div></div>)}
+
               </div>
             </div>
 
             <div className='flex items-center justify-between mt-3'>
               <div className='flex items-center'>
-                <SimpleBtn
-                  isDisabled={isError || !messageId}
-                  className={cn(isMobile && '!px-1.5', 'space-x-1')}
-                  onClick={() => {
-                    if (typeof content === 'string')
-                      copy(content)
-                    else
-                      copy(JSON.stringify(content))
-                    Toast.notify({ type: 'success', message: t('common.actionMsg.copySuccessfully') })
-                  }}>
-                  <Clipboard className='w-3.5 h-3.5' />
-                  {!isMobile && <div>{t('common.operation.copy')}</div>}
-                </SimpleBtn>
+
                 {isInWebApp && (
                   <>
                     {isError && <SimpleBtn
@@ -241,13 +321,6 @@ const GenerationItem: FC<IGenerationItemProps> = ({
                 )}
               </div>
 
-            </div>
-            <div style={{ marginTop: 20, height: 88 }}>
-              {content && content.length && <a href={content[0].url} download="report.pdf" target='_blank'>
-                <div className="group/file-item relative p-2 w-[144px] h-[68px] rounded-lg border-[0.5px] border-components-panel-border bg-components-card-bg shadow-xs hover:bg-components-card-bg-alt"><div className="mb-1 h-8 line-clamp-2 system-xs-medium text-text-tertiary break-all cursor-pointer" title="13793bc4800143c3b4cedeae46ea8da4.pdf">
-                  Report.pdf</div><div className="relative flex items-center justify-between"><div className="flex items-center system-2xs-medium-uppercase text-text-tertiary"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon shrink-0 w-4 h-4 text-[#EA3434] mr-1"><path d="M3.9985 2C3.44749 2 3 2.44405 3 2.9918V21.0082C3 21.5447 3.44476 22 3.9934 22H20.0066C20.5551 22 21 21.5489 21 20.9925L20.9997 7L16 2H3.9985ZM10.5 7.5H12.5C12.5 9.98994 14.6436 12.6604 17.3162 13.5513L16.8586 15.49C13.7234 15.0421 10.4821 16.3804 7.5547 18.3321L6.3753 16.7191C7.46149 15.8502 8.50293 14.3757 9.27499 12.6534C10.0443 10.9373 10.5 9.07749 10.5 7.5ZM11.1 13.4716C11.3673 12.8752 11.6043 12.2563 11.8037 11.6285C12.2754 12.3531 12.8553 13.0182 13.5102 13.5953C12.5284 13.7711 11.5666 14.0596 10.6353 14.4276C10.8 14.1143 10.9551 13.7948 11.1 13.4716Z"></path></svg>pdf<div className="mx-1">·</div>
-                    {Math.ceil(content[0].size / 1024 * 100) / 100} KB</div><button type="button" className="action-btn action-btn-m hidden group-hover/file-item:flex absolute -right-1 -top-1"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="remixicon w-3.5 h-3.5 text-text-tertiary"><path d="M3 19H21V21H3V19ZM13 13.1716L19.0711 7.1005L20.4853 8.51472L12 17L3.51472 8.51472L4.92893 7.1005L11 13.1716V2H13V13.1716Z"></path></svg></button></div></div>
-              </a>}
             </div>
           </div>
         )
